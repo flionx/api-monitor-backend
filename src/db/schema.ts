@@ -1,4 +1,4 @@
-import { pgTable, boolean, integer, serial, text, timestamp, pgEnum, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, boolean, integer, serial, text, timestamp, pgEnum, jsonb, primaryKey } from "drizzle-orm/pg-core";
 
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
@@ -27,5 +27,19 @@ export const notificationChannels = pgTable('notification_channels', {
         .references(() => users.id, { onDelete: "cascade" }),
     type: channelTypeEnum('type').notNull(),
     config: jsonb('config').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull()  
+    createdAt: timestamp('created_at').defaultNow().notNull()
 });
+
+export const monitorChannels = pgTable('monitor_channels',
+    {
+        monitorId: integer('monitor_id').notNull()
+            .references(() => monitors.id, { onDelete: "cascade" }),
+        channelId: integer('channel_id').notNull()
+            .references(() => notificationChannels.id, { onDelete: "cascade" }),
+        message: text('message'),
+        isEnabled: boolean('is_enabled').default(true).notNull(),
+    },
+    (table) => [
+        primaryKey({ columns: [table.monitorId, table.channelId] })
+    ]
+)
