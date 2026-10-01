@@ -1,5 +1,5 @@
-import express, { type Request, type Response } from 'express';
 import 'dotenv/config';
+import express, { type Request, type Response } from 'express';
 
 const PORT = process.env.PORT || 5000;
 
@@ -16,4 +16,4 @@ app.get('/health', (_, res: Response) => {
 
 app.listen(PORT, () => {
     console.log(`[server]: Server is running on port ${PORT}`);
- })
+})
