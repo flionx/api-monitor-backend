@@ -1,6 +1,6 @@
 /// <reference types="node" />
-import { defineConfig } from 'drizzle-kit';
-import 'dotenv/config';
+import { defineConfig } from "drizzle-kit";
+import "dotenv/config";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -14,4 +14,4 @@ export default defineConfig({
     dbCredentials: {
         url: databaseUrl
     }
-})
+});
