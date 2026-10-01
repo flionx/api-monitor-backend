@@ -6,8 +6,13 @@ export class AppError extends Error {
 } 
 
 /** 400 Bad Request */
-export class BadRequestError extends AppError {
-    constructor(message: string) { super(message, 400) }
+export class ValidationError extends AppError {
+    constructor(
+        message: string, 
+        public details?: Array<{ field: string, message: string }>
+    ) { 
+        super(message, 400) 
+    }
 }
 
 /** 401 Unauthorized */
