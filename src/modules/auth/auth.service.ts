@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { db } from '../../db/index.js';
-import { users } from '../../db/schema.js';
-import { AppError, ConflictError, UnauthorizedError } from '../../errors/index.js';
+import { db } from '@/db/index.js';
+import { users } from '@/db/schema.js';
+import { AppError, ConflictError, UnauthorizedError } from '@/shared/errors/index.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {

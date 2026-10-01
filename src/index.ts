@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express, { type Request, type Response } from 'express';
-import { errorHandler } from './middleware/errorHandler.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
+import { errorHandler } from './shared/middleware/errorHandler.js';
 
 const PORT = process.env.PORT || 5000;
 
