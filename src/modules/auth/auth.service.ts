@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { db } from '../../db/index.js';
 import { users } from '../../db/schema.js';
+import { AppError, ConflictError, UnauthorizedError } from '../../errors/index.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -19,7 +20,7 @@ export class AuthService {
             .limit(1);
 
         if (existingUsers.length > 0) {
-            throw new Error('User with this email already exists');
+            throw new ConflictError('User with this email already exists');
         }
 
         const passwordHash = await bcrypt.hash(passwordRaw, 10);
@@ -34,12 +35,12 @@ export class AuthService {
                 });
 
             if (!newUser) {
-                throw new Error('Failed to create user');
+                throw new AppError('Failed to create user', 500);
             }
             return this.buildAuthResponse(newUser);
         } catch (err: any) {
             if (err.code === '23505') {
-                throw new Error('User with this email already exists');
+                throw new ConflictError('User with this email already exists');
             } 
             throw err;
         }
@@ -54,12 +55,12 @@ export class AuthService {
             .limit(1);
 
         if (!user) {
-            throw new Error('Invalid email or password');
+            throw new UnauthorizedError('Invalid email or password');
         }
 
         const isPasswordValid = await bcrypt.compare(passwordRaw, user.passwordHash);
         if (!isPasswordValid) {
-            throw new Error('Invalid email or password');
+            throw new UnauthorizedError('Invalid email or password');
         }
 
         return this.buildAuthResponse(user);
