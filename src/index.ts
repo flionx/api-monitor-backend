@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { type Request, type Response } from 'express';
 import { errorHandler } from './middleware/errorHandler.js';
+import { authRoutes } from './modules/auth/auth.routes.js';
 
 const PORT = process.env.PORT || 5000;
 
@@ -14,6 +15,8 @@ app.get('/health', (_, res: Response) => {
         timestamp: Date.now()
     })
 });
+
+app.use('/api/auth', authRoutes);
 
 app.use(errorHandler);
 
