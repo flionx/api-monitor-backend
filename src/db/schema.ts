@@ -65,3 +65,5 @@ export const checks = pgTable('checks',
         index('idx_checks_checked_at').on(table.checkedAt)
     ]
 );
+
+// todo: add incidents?
