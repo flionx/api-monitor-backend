@@ -4,11 +4,9 @@ import jwt from "jsonwebtoken";
 import { db } from "@/db/index.js";
 import { users } from "@/db/schema.js";
 import { AppError, ConflictError, UnauthorizedError } from "@/shared/errors/index.js";
+import { env } from "@/shared/config/env.js";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET is not set");
-}
+const JWT_SECRET = env.JWT_SECRET;
 
 export class AuthService {
     static async register(emailRaw: string, passwordRaw: string) {
@@ -59,7 +57,7 @@ export class AuthService {
     }
 
     private static generateToken(userId: number, email: string) {
-        return jwt.sign({ userId, email }, JWT_SECRET!, { expiresIn: "24h" });
+        return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: "24h" });
     }
 
     private static buildAuthResponse(user: { id: number; email: string; createdAt: Date }) {

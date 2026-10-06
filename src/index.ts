@@ -1,9 +1,9 @@
-import "dotenv/config";
 import express, { type Request, type Response } from "express";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.js";
+import { env } from "./shared/config/env.js";
 
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT;
 
 const app = express();
 app.use(express.json());
