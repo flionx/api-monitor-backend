@@ -10,7 +10,7 @@ router.use(authenticate);
 
 router.get("/", MonitorsController.getAll);
 router.post("/", validate(createMonitorSchema), MonitorsController.create);
-router.patch("/", validate(updateMonitorSchema), MonitorsController.update);
+router.patch("/:id", validate(updateMonitorSchema), MonitorsController.update);
 router.delete("/:id", MonitorsController.delete);
 
 export { router as monitorRoutes };
