@@ -4,7 +4,7 @@ import { ValidationError } from "@/shared/errors/index.js";
 import type { CreateMonitorDto, UpdateMonitorDto } from "./monitors.schema.js";
 import { getAuthenticatedUser } from "@/shared/lib/get-authenticated-user.js";
 
-export class MonitorController {
+export class MonitorsController {
     static async getAll(req: Request, res: Response) {
         const { userId } = getAuthenticatedUser(req);
         const list = await MonitorsService.getAllByUserId(userId);

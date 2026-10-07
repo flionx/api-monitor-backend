@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { env } from "./shared/config/env.js";
+import { monitorRoutes } from "./modules/monitors/monitors.routes.js";
 
 const PORT = env.PORT;
 
@@ -17,6 +18,7 @@ app.get("/health", (_, res: Response) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/monitors", monitorRoutes);
 
 app.use(errorHandler);
 
