@@ -12,3 +12,7 @@ export const updateMonitorSchema = createMonitorSchema.required().partial();
 
 export type CreateMonitorDto = z.infer<typeof createMonitorSchema>;
 export type UpdateMonitorDto = z.infer<typeof updateMonitorSchema>;
+
+export const monitorIdParamSchema = z.object({
+    id: z.coerce.number().int().positive()
+});
