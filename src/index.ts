@@ -4,6 +4,7 @@ import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { env } from "./shared/config/env.js";
 import { monitorRoutes } from "./modules/monitors/monitors.routes.js";
 import { WorkerService } from "./worker/worker.service.js";
+import { pool } from "./db/index.js";
 
 const PORT = env.PORT;
 
@@ -23,10 +24,41 @@ app.use("/api/monitors", monitorRoutes);
 
 app.use(errorHandler);
 
-WorkerService.start();
+// WorkerService.start();
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-// todo: add graceful shutdown
+let shuttingDown = false;
+const gracefulShutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+
+    console.log(`[Shutdown] Received ${signal}, shutting down...`);
+
+    const forceExitTimer = setTimeout(() => {
+        console.error("[Shutdown] Force exit after timeout");
+        process.exit(1);
+    }, 10000).unref();
+
+    WorkerService.stop();
+
+    server.close(() => {
+        console.log("[Shutdown] HTTP server closed");
+    });
+
+    server.closeIdleConnections();
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    await pool.end();
+
+    clearTimeout(forceExitTimer);
+    console.log("[Shutdown] Complete");
+    process.exit(0);
+};
+
+["SIGTERM", "SIGINT"].forEach((signal) => {
+    process.on(signal, () => gracefulShutdown(signal));
+});
