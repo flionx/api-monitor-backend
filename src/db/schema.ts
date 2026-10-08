@@ -66,6 +66,7 @@ export const checkErrorTypeEnum = pgEnum("check_error_type", [
     "connection",
     "unknown"
 ]);
+export type CheckErrorType = (typeof checkErrorTypeEnum.enumValues)[number];
 
 export const checks = pgTable(
     "checks",
