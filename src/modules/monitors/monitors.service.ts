@@ -2,7 +2,7 @@ import { db } from "@/db/index.js";
 import { monitors } from "@/db/schema.js";
 import { and, desc, eq } from "drizzle-orm";
 import type { CreateMonitorDto, UpdateMonitorDto } from "./monitors.schema.js";
-import { AppError, NotFoundError } from "@/shared/errors/index.js";
+import { AppError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
 
 export class MonitorsService {
     static async getAllByUserId(userId: number) {
@@ -30,6 +30,10 @@ export class MonitorsService {
     }
 
     static async update(userId: number, monitorId: number, data: UpdateMonitorDto) {
+        if (Object.keys(data).length === 0) {
+            throw new ValidationError("No fields provided for update");
+        }
+
         const [updatedMonitor] = await db
             .update(monitors)
             .set({
