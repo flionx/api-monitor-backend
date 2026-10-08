@@ -3,6 +3,7 @@ import { authRoutes } from "./modules/auth/auth.routes.js";
 import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { env } from "./shared/config/env.js";
 import { monitorRoutes } from "./modules/monitors/monitors.routes.js";
+import { WorkerService } from "./worker/worker.service.js";
 
 const PORT = env.PORT;
 
@@ -22,6 +23,10 @@ app.use("/api/monitors", monitorRoutes);
 
 app.use(errorHandler);
 
+WorkerService.start();
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+// todo: add graceful shutdown
