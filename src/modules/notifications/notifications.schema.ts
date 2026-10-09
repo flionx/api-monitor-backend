@@ -6,8 +6,8 @@ const telegramConfigSchema = z.object({
     chatId: z.union([z.string().min(1), z.number().int()]).transform(String)
 }) satisfies z.ZodType<TelegramConfig>;
 
-const DISCORD_WEBHOOK_REGEX =
-    /^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
+export const DISCORD_WEBHOOK_REGEX =
+    /^(https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks)\/(\d+)\/([\w-]+)$/;
 
 const discordConfigSchema = z.object({
     webhookUrl: z.string().regex(DISCORD_WEBHOOK_REGEX, "Invalid Discord webhook URL")
