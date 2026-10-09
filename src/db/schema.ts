@@ -33,6 +33,16 @@ export const monitors = pgTable("monitors", {
 });
 
 export const channelTypeEnum = pgEnum("channel_type", ["telegram", "discord"]);
+export type ChannelType = (typeof channelTypeEnum.enumValues)[number];
+
+export interface TelegramConfig {
+    chatId: string;
+    botToken: string;
+}
+export interface DiscordConfig {
+    webhookUrl: string;
+}
+export type ChannelConfig = TelegramConfig | DiscordConfig;
 
 export const notificationChannels = pgTable("notification_channels", {
     id: serial("id").primaryKey(),
@@ -40,7 +50,7 @@ export const notificationChannels = pgTable("notification_channels", {
         .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
     type: channelTypeEnum("type").notNull(),
-    config: jsonb("config").notNull(),
+    config: jsonb("config").$type<ChannelConfig>().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
