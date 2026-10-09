@@ -53,12 +53,10 @@ export class MonitorsService {
         const [deletedMonitor] = await db
             .delete(monitors)
             .where(and(eq(monitors.id, monitorId), eq(monitors.userId, userId)))
-            .returning();
+            .returning({ id: monitors.id });
 
         if (!deletedMonitor) {
             throw new NotFoundError("Monitor not found or access denied");
         }
-
-        return deletedMonitor;
     }
 }
