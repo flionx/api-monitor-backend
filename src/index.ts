@@ -1,8 +1,9 @@
-import express, { type Request, type Response } from "express";
-import { authRoutes } from "./modules/auth/auth.routes.js";
-import { errorHandler } from "./shared/middleware/errorHandler.js";
+import express, { type Response } from "express";
 import { env } from "./shared/config/env.js";
+import { authRoutes } from "./modules/auth/auth.routes.js";
 import { monitorRoutes } from "./modules/monitors/monitors.routes.js";
+import { notificationRoutes } from "./modules/notifications/notifications.routes.js";
+import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { WorkerService } from "./worker/worker.service.js";
 import { pool } from "./db/index.js";
 
@@ -21,6 +22,7 @@ app.get("/health", (_, res: Response) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/monitors", monitorRoutes);
+app.use("/api/notification-channels", notificationRoutes);
 
 app.use(errorHandler);
 

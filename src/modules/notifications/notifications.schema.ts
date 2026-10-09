@@ -3,7 +3,7 @@ import z from "zod";
 
 const telegramConfigSchema = z.object({
     botToken: z.string().regex(/^\d+:[\w-]{30,}$/, "Invalid Telegram bot token"),
-    chatId: z.union([z.string().min(1), z.number().int()]).transform(String)
+    chatId: z.union([z.string().trim().min(1), z.number().int()]).transform((val) => String(val))
 }) satisfies z.ZodType<TelegramConfig>;
 
 export const DISCORD_WEBHOOK_REGEX =
