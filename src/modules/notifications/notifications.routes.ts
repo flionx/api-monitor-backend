@@ -22,5 +22,6 @@ router.patch(
     NotificationsController.update
 );
 router.delete("/:id", validateParams(channelIdParamSchema), NotificationsController.delete);
+router.post("/:id/test", validateParams(channelIdParamSchema), NotificationsController.test);
 
 export { router as notificationRoutes };

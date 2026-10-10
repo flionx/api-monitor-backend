@@ -3,6 +3,7 @@ import { renderMessage, type MonitorCheck } from "./notifications.template.js";
 import { monitorChannels, notificationChannels } from "@/db/schema.js";
 import { and, eq } from "drizzle-orm";
 import { sendViaChannel } from "./providers/index.js";
+import type { NotificationChannel } from "./notifications.mapper.js";
 
 export class NotifyService {
     static async dispatch(check: MonitorCheck) {
@@ -36,5 +37,9 @@ export class NotifyService {
                 );
             }
         });
+    }
+
+    static async sendTest(channel: NotificationChannel) {
+        await sendViaChannel(channel, "Test notification from API Monitor");
     }
 }

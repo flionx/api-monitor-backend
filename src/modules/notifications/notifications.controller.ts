@@ -2,6 +2,7 @@ import { getAuthenticatedUser } from "@/shared/lib/get-authenticated-user.js";
 import type { Request, Response } from "express";
 import { NotificationsService } from "./notifications.service.js";
 import type { CreateChannelDto } from "./notifications.schema.js";
+import { NotifyService } from "./notify.service.js";
 
 export class NotificationsController {
     static async getAll(req: Request, res: Response) {
@@ -34,5 +35,15 @@ export class NotificationsController {
 
         await NotificationsService.delete(userId, channelId);
         res.status(200).json({ message: "Channel deleted successfully" });
+    }
+
+    static async test(req: Request, res: Response) {
+        const { userId } = getAuthenticatedUser(req);
+        const channelId = Number(req.params.id);
+
+        const channel = await NotificationsService.getOwned(userId, channelId);
+        await NotifyService.sendTest(channel);
+
+        res.status(200).json({ message: "Test notification sent" });
     }
 }

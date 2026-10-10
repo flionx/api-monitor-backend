@@ -9,7 +9,7 @@ export class DiscordProvider {
         const res = await postJson(
             config.webhookUrl,
             {
-                text: truncate(text, DISCORD_MAX_LENGTH),
+                content: truncate(text, DISCORD_MAX_LENGTH),
                 allowed_mentions: { parse: [] }
             },
             "Discord"

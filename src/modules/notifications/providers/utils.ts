@@ -13,7 +13,7 @@ export async function postJson(url: string, body: unknown, providerName: string)
     } catch (err) {
         const reason =
             err instanceof Error && err.name === "TimeoutError"
-                ? `request timed out after ${REQUEST_TIMEOUT_MS}ms`
+                ? `Request timed out after ${REQUEST_TIMEOUT_MS}ms`
                 : "Network error";
         throw new DeliveryError(`${providerName}: ${reason}`);
     }
