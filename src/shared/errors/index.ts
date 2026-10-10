@@ -38,3 +38,10 @@ export class ConflictError extends AppError {
         super(message, 409);
     }
 }
+
+/** 502 Bad Gateway */
+export class DeliveryError extends AppError {
+    constructor(message: string) {
+        super(message, 502);
+    }
+}

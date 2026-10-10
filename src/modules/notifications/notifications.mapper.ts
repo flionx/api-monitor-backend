@@ -46,6 +46,10 @@ function maskConfig(channel: NotificationChannel) {
             const { webhookUrl } = channel.config as DiscordConfig;
             return { webhookUrl: maskDiscordWebhook(webhookUrl) };
         }
+        default: {
+            const _exhaustive: never = channel.type;
+            throw new Error(`Unsupported channel type: ${_exhaustive}`);
+        }
     }
 }
 

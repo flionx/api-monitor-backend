@@ -31,7 +31,7 @@ export class NotificationsService {
             );
 
         if (!channel) {
-            throw new NotFoundError("Channel not fount or access denied");
+            throw new NotFoundError("Channel not found or access denied");
         }
         return channel;
     }
