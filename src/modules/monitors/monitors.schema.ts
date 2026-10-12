@@ -16,3 +16,28 @@ export type UpdateMonitorDto = z.infer<typeof updateMonitorSchema>;
 export const monitorIdParamSchema = z.object({
     id: z.coerce.number().int().positive()
 });
+
+export const monitorChannelParamsSchema = z.object({
+    id: z.coerce.number().int().positive(),
+    channelId: z.coerce.number().int().positive()
+});
+
+export const channelMessageSchema = z
+    .string()
+    .trim()
+    .min(1, "Message cannot be empty")
+    .max(500)
+    .nullable();
+
+export const attachChannelSchema = z.object({
+    message: channelMessageSchema.default(null),
+    isEnabled: z.boolean().default(true)
+});
+
+export const updateMonitorChannelSchema = z.object({
+    message: channelMessageSchema.optional(),
+    isEnabled: z.boolean().optional()
+});
+
+export type AttachChannelDto = z.infer<typeof attachChannelSchema>;
+export type UpdateMonitorChannelDto = z.infer<typeof updateMonitorChannelSchema>;
