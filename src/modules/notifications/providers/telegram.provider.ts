@@ -11,7 +11,7 @@ export class TelegramProvider {
             {
                 chat_id: config.chatId,
                 text: truncate(text, TELEGRAM_MAX_LENGTH),
-                disable_web_page_interview: true
+                disable_web_page_preview: true
             },
             "Telegram"
         );

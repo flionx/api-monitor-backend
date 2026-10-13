@@ -1,4 +1,4 @@
-import type { DiscordConfig, TelegramConfig } from "@/db/schema.js";
+import type { DiscordConfig } from "@/db/schema.js";
 import { postJson, truncate } from "./utils.js";
 import { DeliveryError } from "@/shared/errors/index.js";
 
@@ -10,6 +10,7 @@ export class DiscordProvider {
             config.webhookUrl,
             {
                 content: truncate(text, DISCORD_MAX_LENGTH),
+                flags: 4,
                 allowed_mentions: { parse: [] }
             },
             "Discord"

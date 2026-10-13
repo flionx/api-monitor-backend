@@ -1,13 +1,23 @@
 import { db } from "@/db/index.js";
 import { checks, type CheckErrorType } from "@/db/schema.js";
+import type { MonitorCheck } from "@/modules/notifications/notifications.template.js";
+import { NotifyService } from "@/modules/notifications/notify.service.js";
+import { desc, eq } from "drizzle-orm";
 
 interface MonitorToCheck {
     id: number;
+    name: string;
     url: string;
     timeoutMs: number;
 }
 
+function shouldNotify(previusIsUp: boolean | undefined, isUp: boolean) {
+    return previusIsUp === undefined ? !isUp : previusIsUp !== isUp;
+}
+
 export class CheckerService {
+    private static pendingNotifications = new Set<Promise<void>>();
+
     static async checkOne(monitor: MonitorToCheck) {
         const startTime = Date.now();
         let isUp = false;
@@ -52,13 +62,54 @@ export class CheckerService {
 
         const responseTimeMs = Date.now() - startTime;
 
-        await db.insert(checks).values({
-            monitorId: monitor.id,
+        const [previus] = await db
+            .select({ isUp: checks.isUp })
+            .from(checks)
+            .where(eq(checks.monitorId, monitor.id))
+            .orderBy(desc(checks.checkedAt))
+            .limit(1);
+
+        const [saved] = await db
+            .insert(checks)
+            .values({
+                monitorId: monitor.id,
+                statusCode,
+                responseTimeMs,
+                isUp,
+                errorMessage,
+                errorType
+            })
+            .returning({ checkedAt: checks.checkedAt });
+
+        if (!shouldNotify(previus?.isUp, isUp)) return;
+
+        this.notify({
+            monitor: { id: monitor.id, name: monitor.name, url: monitor.url },
+            isUp,
             statusCode,
             responseTimeMs,
-            isUp,
             errorMessage,
-            errorType
+            checkedAt: saved?.checkedAt ?? new Date()
         });
+    }
+
+    private static notify(check: MonitorCheck) {
+        const task: Promise<void> = NotifyService.dispatch(check)
+            .catch((err) => {
+                console.log(
+                    `[Checker] Alert dispatch failed for monitor ${check.monitor.id}:`,
+                    err
+                );
+            })
+            .finally(() => {
+                this.pendingNotifications.delete(task);
+            });
+
+        this.pendingNotifications.add(task);
+    }
+
+    // wait alerts for shutdown
+    static async drainNotifications() {
+        await Promise.allSettled([...this.pendingNotifications]);
     }
 }

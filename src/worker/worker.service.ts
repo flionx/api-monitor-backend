@@ -22,6 +22,7 @@ export class WorkerService {
                 const monitorsToCheck = await db
                     .select({
                         id: monitors.id,
+                        name: monitors.name,
                         url: monitors.url,
                         timeoutMs: monitors.timeoutMs
                     })

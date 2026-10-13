@@ -1,7 +1,7 @@
 export interface MonitorCheck {
     monitor: { id: number; name: string; url: string };
     isUp: boolean;
-    statusCode: number;
+    statusCode: number | null;
     responseTimeMs: number;
     errorMessage: string | null;
     checkedAt: Date;
@@ -15,6 +15,7 @@ export const TEMPLATE_VARIABLES = [
     "monitor.url",
     "status",
     "statusCode",
+    "error",
     "responseTimeMs",
     "checkedAt"
 ] as const;
@@ -25,6 +26,7 @@ function buildVariables(check: MonitorCheck): Record<string, string> {
         "monitor.url": check.monitor.url,
         status: check.isUp ? "UP" : "DOWN",
         statusCode: check.statusCode === null ? "n/a" : String(check.statusCode),
+        error: check.errorMessage ?? "n/a",
         responseTimeMs: String(check.responseTimeMs),
         checkedAt: check.checkedAt.toISOString()
     };
