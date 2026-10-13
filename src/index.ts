@@ -26,7 +26,9 @@ app.use("/api/notification-channels", notificationRoutes);
 
 app.use(errorHandler);
 
-// WorkerService.start();
+if (env.WORKER_ENABLED) {
+    WorkerService.start();
+}
 
 const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
@@ -44,7 +46,7 @@ const gracefulShutdown = async (signal: string) => {
         process.exit(1);
     }, 10000).unref();
 
-    WorkerService.stop();
+    await WorkerService.stop();
 
     server.close(() => {
         console.log("[Shutdown] HTTP server closed");

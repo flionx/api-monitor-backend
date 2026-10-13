@@ -4,7 +4,8 @@ import "dotenv/config";
 const envSchema = z.object({
     PORT: z.coerce.number().int().positive().default(5000),
     DATABASE_URL: z.url(),
-    JWT_SECRET: z.string()
+    JWT_SECRET: z.string(),
+    WORKER_ENABLED: z.stringbool().default(true)
 });
 
 const parsed = envSchema.safeParse(process.env);
