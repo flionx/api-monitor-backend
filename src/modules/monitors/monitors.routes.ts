@@ -12,6 +12,9 @@ import { authenticate } from "@/shared/middleware/authenticate.js";
 import { validate } from "@/shared/middleware/validate.js";
 import { validateParams } from "@/shared/middleware/validateParams.js";
 import { MonitorChannelsController } from "./monitor-channels.controller.js";
+import { validateQuery } from "@/shared/middleware/validateQuery.js";
+import { statsQuerySchema } from "../metrics/metrics.schema.js";
+import { MetricsController } from "../metrics/metrics.controller.js";
 
 const router = Router();
 
@@ -28,6 +31,7 @@ router.patch(
 );
 router.delete("/:id", validateParams(monitorIdParamSchema), MonitorsController.delete);
 
+// channels
 router.get("/:id/channels", validateParams(monitorIdParamSchema), MonitorChannelsController.getAll);
 router.put(
     "/:id/channels/:channelId",
@@ -45,6 +49,14 @@ router.delete(
     "/:id/channels/:channelId",
     validateParams(monitorChannelParamsSchema),
     MonitorChannelsController.detach
+);
+
+// metrics
+router.get(
+    "/:id/stats",
+    validateParams(monitorIdParamSchema),
+    validateQuery(statsQuerySchema),
+    MetricsController.getStats
 );
 
 export { router as monitorRoutes };

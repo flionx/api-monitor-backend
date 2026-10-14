@@ -1,0 +1,15 @@
+import type { Request, Response } from "express";
+import { getAuthenticatedUser } from "@/shared/lib/get-authenticated-user.js";
+import type { StatsQuery } from "./metrics.schema.js";
+import { MerticsService } from "./metrics.service.js";
+
+export class MetricsController {
+    static async getStats(req: Request, res: Response) {
+        const { userId } = getAuthenticatedUser(req);
+        const monitorId = Number(req.params.id);
+        const { range } = res.locals.query as StatsQuery;
+
+        const stats = await MerticsService.getStats(userId, monitorId, range);
+        res.status(200).json(stats);
+    }
+}
