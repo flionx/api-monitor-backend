@@ -1,10 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/index.js";
-import { monitorChannels, monitors, notificationChannels } from "@/db/schema.js";
+import { monitorChannels, notificationChannels } from "@/db/schema.js";
 import { toPublicChannel } from "../notifications/notifications.mapper.js";
 import { getTemplateWarnings } from "../notifications/notifications.template.js";
 import type { AttachChannelDto, UpdateMonitorChannelDto } from "./monitors.schema.js";
 import { AppError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
+import { MonitorsService } from "./monitors.service.js";
 
 type MonitorChannelLink = typeof monitorChannels.$inferSelect;
 
@@ -19,18 +20,6 @@ function toLinkResponse(link: MonitorChannelLink) {
 }
 
 export class MonitorChannelsService {
-    private static async assertMonitorOwned(userId: number, monitorId: number) {
-        const [monitor] = await db
-            .select({ id: monitors.id })
-            .from(monitors)
-            .where(and(eq(monitors.id, monitorId), eq(monitors.userId, userId)))
-            .limit(1);
-
-        if (!monitor) {
-            throw new NotFoundError("Monitor not found or access denied");
-        }
-    }
-
     private static async assertChannelOwned(userId: number, channelId: number) {
         const [monitor] = await db
             .select({ id: notificationChannels.id })
@@ -46,7 +35,7 @@ export class MonitorChannelsService {
     }
 
     static async getAll(userId: number, monitorId: number) {
-        await this.assertMonitorOwned(userId, monitorId);
+        await MonitorsService.getOwned(userId, monitorId);
 
         const rows = await db
             .select({
@@ -71,7 +60,7 @@ export class MonitorChannelsService {
         channelId: number,
         data: AttachChannelDto
     ) {
-        await this.assertMonitorOwned(userId, monitorId);
+        await MonitorsService.getOwned(userId, monitorId);
         await this.assertChannelOwned(userId, channelId);
 
         const [link] = await db
@@ -102,7 +91,7 @@ export class MonitorChannelsService {
         if (Object.keys(data).length === 0) {
             throw new ValidationError("No fields provided to update");
         }
-        await this.assertMonitorOwned(userId, monitorId);
+        await MonitorsService.getOwned(userId, monitorId);
 
         const [link] = await db
             .update(monitorChannels)
@@ -122,7 +111,7 @@ export class MonitorChannelsService {
     }
 
     static async detach(userId: number, monitorId: number, channelId: number) {
-        await this.assertMonitorOwned(userId, monitorId);
+        await MonitorsService.getOwned(userId, monitorId);
 
         const [deleted] = await db
             .delete(monitorChannels)

@@ -13,6 +13,19 @@ export class MonitorsService {
             .orderBy(desc(monitors.createdAt));
     }
 
+    static async getOwned(userId: number, monitorId: number) {
+        const [monitor] = await db
+            .select()
+            .from(monitors)
+            .where(and(eq(monitors.userId, userId), eq(monitors.id, monitorId)))
+            .limit(1);
+
+        if (!monitor) {
+            throw new NotFoundError("Monitor not found or access denied");
+        }
+        return monitor;
+    }
+
     static async create(userId: number, data: CreateMonitorDto) {
         const [newMonitor] = await db
             .insert(monitors)
