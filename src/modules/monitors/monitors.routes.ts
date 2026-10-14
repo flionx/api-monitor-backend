@@ -18,6 +18,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/", MonitorsController.getAll);
+router.get("/:id", validateParams(monitorIdParamSchema), MonitorsController.getById);
 router.post("/", validate(createMonitorSchema), MonitorsController.create);
 router.patch(
     "/:id",

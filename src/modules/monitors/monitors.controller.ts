@@ -10,6 +10,13 @@ export class MonitorsController {
         res.status(200).json(list);
     }
 
+    static async getById(req: Request, res: Response) {
+        const { userId } = getAuthenticatedUser(req);
+        const monitorId = Number(req.params.id);
+        const monitor = await MonitorsService.getOwned(userId, monitorId);
+        res.status(200).json(monitor);
+    }
+
     static async create(req: Request, res: Response) {
         const { userId } = getAuthenticatedUser(req);
         const monitor = await MonitorsService.create(userId, req.body as CreateMonitorDto);
