@@ -67,4 +67,47 @@ export class MerticsService {
             }
         };
     }
+
+    static async getChart(userId: number, monitorId: number, range: MetricsRange, points: number) {
+        await MonitorsService.getOwned(userId, monitorId);
+
+        const rangeSeconds = RANGE_SECONDS[range];
+        const bucketSeconds = Math.ceil(rangeSeconds / points);
+
+        const bucket = sql`date_bin(
+            ${bucketSeconds}::int * INTERVAL '1 second',
+            ${checks.checkedAt},
+            TIMESTAMP '2000-01-01'
+        )`.mapWith(checks.checkedAt);
+
+        const rows = await db
+            .select({
+                timestamp: bucket,
+                totalChecks: sql<number>`count(*)::int`,
+                failedChecks: sql<number>`(count(*) FILTER (WHERE NOT ${checks.isUp}))::int`,
+                avgResponseTimeMs: sql<
+                    number | null
+                >`round(avg(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
+                maxResponseTimeMs: sql<
+                    number | null
+                >`(max(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`
+            })
+            .from(checks)
+            .where(and(eq(checks.monitorId, monitorId), withinLast(rangeSeconds)))
+            .groupBy(sql`1`)
+            .orderBy(sql`1`);
+
+        return {
+            range,
+            bucketSeconds,
+            points: rows.map((row) => ({
+                timestamp: row.timestamp,
+                totalChecks: row.totalChecks,
+                failedChecks: row.failedChecks,
+                avgResponseTimeMs: row.avgResponseTimeMs,
+                maxResponseTimeMs: row.maxResponseTimeMs,
+                uptimePercent: toPercent(row.totalChecks - row.failedChecks, row.totalChecks)
+            }))
+        };
+    }
 }

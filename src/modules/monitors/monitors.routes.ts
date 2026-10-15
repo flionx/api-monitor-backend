@@ -13,7 +13,7 @@ import { validate } from "@/shared/middleware/validate.js";
 import { validateParams } from "@/shared/middleware/validateParams.js";
 import { MonitorChannelsController } from "./monitor-channels.controller.js";
 import { validateQuery } from "@/shared/middleware/validateQuery.js";
-import { statsQuerySchema } from "../metrics/metrics.schema.js";
+import { chartQuerySchema, statsQuerySchema } from "../metrics/metrics.schema.js";
 import { MetricsController } from "../metrics/metrics.controller.js";
 
 const router = Router();
@@ -57,6 +57,12 @@ router.get(
     validateParams(monitorIdParamSchema),
     validateQuery(statsQuerySchema),
     MetricsController.getStats
+);
+router.get(
+    "/:id/chart",
+    validateParams(monitorIdParamSchema),
+    validateQuery(chartQuerySchema),
+    MetricsController.getChart
 );
 
 export { router as monitorRoutes };
