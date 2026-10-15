@@ -77,7 +77,7 @@ export class MerticsService {
         const bucket = sql`date_bin(
             ${bucketSeconds}::int * INTERVAL '1 second',
             ${checks.checkedAt},
-            TIMESTAMP '2000-01-01'
+            TIMESTAMPTZ '2000-01-01 00:00:00+00'
         )`.mapWith(checks.checkedAt);
 
         const rows = await db

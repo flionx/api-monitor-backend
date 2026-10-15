@@ -12,11 +12,13 @@ import {
     index
 } from "drizzle-orm/pg-core";
 
+const timestamptz = (name: string) => timestamp(name, { withTimezone: true });
+
 export const users = pgTable("users", {
     id: serial("id").primaryKey(),
     email: text("email").notNull().unique(),
     passwordHash: text("password_hash").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull()
+    createdAt: timestamptz("created_at").defaultNow().notNull()
 });
 
 export const monitors = pgTable("monitors", {
@@ -29,7 +31,7 @@ export const monitors = pgTable("monitors", {
     intervalSeconds: integer("interval_seconds").default(60).notNull(),
     timeoutMs: integer("timeout_ms").default(5000).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull()
+    createdAt: timestamptz("created_at").defaultNow().notNull()
 });
 
 export const channelTypeEnum = pgEnum("channel_type", ["telegram", "discord"]);
@@ -51,7 +53,7 @@ export const notificationChannels = pgTable("notification_channels", {
         .references(() => users.id, { onDelete: "cascade" }),
     type: channelTypeEnum("type").notNull(),
     config: jsonb("config").$type<ChannelConfig>().notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull()
+    createdAt: timestamptz("created_at").defaultNow().notNull()
 });
 
 export const monitorChannels = pgTable(
@@ -90,7 +92,7 @@ export const checks = pgTable(
         isUp: boolean("is_up").notNull(),
         errorType: checkErrorTypeEnum("error_type"),
         errorMessage: text("error_message"),
-        checkedAt: timestamp("checked_at").defaultNow().notNull()
+        checkedAt: timestamptz("checked_at").defaultNow().notNull()
     },
     (table) => [
         index("idx_checks_monitor_time").on(table.monitorId, table.checkedAt),
