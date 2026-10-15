@@ -1,16 +1,26 @@
 import { db } from "@/db/index.js";
 import { monitors } from "@/db/schema.js";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import type { CreateMonitorDto, UpdateMonitorDto } from "./monitors.schema.js";
 import { AppError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
+import { buildPage, type PaginationQuery } from "@/shared/lib/pagination.js";
 
 export class MonitorsService {
-    static async getAllByUserId(userId: number) {
-        return await db
-            .select()
-            .from(monitors)
-            .where(eq(monitors.userId, userId))
-            .orderBy(desc(monitors.createdAt));
+    static async getAllByUserId(userId: number, pagination: PaginationQuery) {
+        const where = eq(monitors.userId, userId);
+
+        const [rows, [totalRow]] = await Promise.all([
+            db
+                .select()
+                .from(monitors)
+                .where(where)
+                .orderBy(desc(monitors.createdAt), desc(monitors.id))
+                .limit(pagination.limit)
+                .offset(pagination.offset),
+            db.select({ total: count() }).from(monitors).where(where)
+        ]);
+
+        return buildPage(rows, totalRow?.total ?? 0, pagination);
     }
 
     static async getOwned(userId: number, monitorId: number) {
