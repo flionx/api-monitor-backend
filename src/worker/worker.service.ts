@@ -33,7 +33,10 @@ export class WorkerService {
                     id: monitors.id,
                     name: monitors.name,
                     url: monitors.url,
-                    timeoutMs: monitors.timeoutMs
+                    timeoutMs: monitors.timeoutMs,
+                    status: monitors.status,
+                    consecutiveFailures: monitors.consecutiveFailures,
+                    failureThreshold: monitors.failureThreshold
                 })
                 .from(monitors)
                 .leftJoin(

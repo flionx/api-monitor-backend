@@ -1,18 +1,18 @@
 import { db } from "@/db/index.js";
-import { checks, type CheckErrorType } from "@/db/schema.js";
+import { checks, monitors, type CheckErrorType, type MonitorStatus } from "@/db/schema.js";
 import type { MonitorCheck } from "@/modules/notifications/notifications.template.js";
 import { NotifyService } from "@/modules/notifications/notify.service.js";
 import { desc, eq } from "drizzle-orm";
+import { evaluateCheck } from "./evaluate-check.js";
 
 interface MonitorToCheck {
     id: number;
     name: string;
     url: string;
     timeoutMs: number;
-}
-
-function shouldNotify(previusIsUp: boolean | undefined, isUp: boolean) {
-    return previusIsUp === undefined ? !isUp : previusIsUp !== isUp;
+    status: MonitorStatus;
+    consecutiveFailures: number;
+    failureThreshold: number;
 }
 
 export class CheckerService {
@@ -61,27 +61,33 @@ export class CheckerService {
         }
 
         const responseTimeMs = Date.now() - startTime;
+        const next = evaluateCheck(monitor, isUp, monitor.failureThreshold);
 
-        const [previus] = await db
-            .select({ isUp: checks.isUp })
-            .from(checks)
-            .where(eq(checks.monitorId, monitor.id))
-            .orderBy(desc(checks.checkedAt))
-            .limit(1);
+        const checkedAt = await db.transaction(async (tx) => {
+            const [saved] = await tx
+                .insert(checks)
+                .values({
+                    monitorId: monitor.id,
+                    statusCode,
+                    responseTimeMs,
+                    isUp,
+                    errorMessage,
+                    errorType
+                })
+                .returning({ checkedAt: checks.checkedAt });
 
-        const [saved] = await db
-            .insert(checks)
-            .values({
-                monitorId: monitor.id,
-                statusCode,
-                responseTimeMs,
-                isUp,
-                errorMessage,
-                errorType
-            })
-            .returning({ checkedAt: checks.checkedAt });
+            await tx
+                .update(monitors)
+                .set({
+                    status: next.status,
+                    consecutiveFailures: next.consecutiveFailures
+                })
+                .where(eq(monitors.id, monitor.id));
 
-        if (!shouldNotify(previus?.isUp, isUp)) return;
+            return saved?.checkedAt ?? new Date();
+        });
+
+        if (!next.notify) return;
 
         this.notify({
             monitor: { id: monitor.id, name: monitor.name, url: monitor.url },
@@ -89,7 +95,7 @@ export class CheckerService {
             statusCode,
             responseTimeMs,
             errorMessage,
-            checkedAt: saved?.checkedAt ?? new Date()
+            checkedAt
         });
     }
 
