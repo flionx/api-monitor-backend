@@ -95,7 +95,8 @@ export class CheckerService {
             statusCode,
             responseTimeMs,
             errorMessage,
-            checkedAt
+            checkedAt,
+            consecutiveFailures: next.consecutiveFailures
         });
     }
 

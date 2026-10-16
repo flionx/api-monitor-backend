@@ -5,9 +5,10 @@ export interface MonitorCheck {
     responseTimeMs: number;
     errorMessage: string | null;
     checkedAt: Date;
+    consecutiveFailures: number;
 }
 
-export const DEFAULT_DOWN_TEMPLATE = `🔴 {{monitor.name}} is {{status}}\n{{monitor.url}}\nReason: {{error}}\nStatus code: {{statusCode}}`;
+export const DEFAULT_DOWN_TEMPLATE = `🔴 {{monitor.name}} is {{status}}\n{{monitor.url}}\nReason: {{error}}\nStatus code: {{statusCode}}\nFailed checks in a row: {{failures}}`;
 export const DEFAULT_UP_TEMPLATE = `🟢 {{monitor.name}} is {{status}}\n{{monitor.url}}\nResponse time: {{responseTimeMs}}ms`;
 
 export const TEMPLATE_VARIABLES = [
@@ -17,7 +18,8 @@ export const TEMPLATE_VARIABLES = [
     "statusCode",
     "error",
     "responseTimeMs",
-    "checkedAt"
+    "checkedAt",
+    "failures"
 ] as const;
 
 function buildVariables(check: MonitorCheck): Record<string, string> {
@@ -28,7 +30,8 @@ function buildVariables(check: MonitorCheck): Record<string, string> {
         statusCode: check.statusCode === null ? "n/a" : String(check.statusCode),
         error: check.errorMessage ?? "n/a",
         responseTimeMs: String(check.responseTimeMs),
-        checkedAt: check.checkedAt.toISOString()
+        checkedAt: check.checkedAt.toISOString(),
+        failures: String(check.consecutiveFailures)
     };
 }
 
