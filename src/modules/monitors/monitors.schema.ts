@@ -5,6 +5,7 @@ export const createMonitorSchema = z.object({
     url: z.url("Invalid URL format"),
     intervalSeconds: z.number().int().min(10).max(86400).default(60), //max 24h
     timeoutMs: z.number().int().min(1000).max(30000).default(5000),
+    failureThreshold: z.number().int().min(1).max(10).default(1),
     isActive: z.boolean().default(true)
 });
 
