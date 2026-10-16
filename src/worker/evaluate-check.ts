@@ -19,5 +19,5 @@ export function evaluateCheck(state: MonitorState, isUp: boolean, threshold: num
     if (consecutiveFailures >= threshold) {
         return { status: "down", consecutiveFailures, notify: state.status !== "down" };
     }
-    return { status: "down", consecutiveFailures, notify: false };
+    return { status: state.status, consecutiveFailures, notify: false };
 }
