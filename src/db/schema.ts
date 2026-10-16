@@ -21,6 +21,9 @@ export const users = pgTable("users", {
     createdAt: timestamptz("created_at").defaultNow().notNull()
 });
 
+export const monitorStatusEnum = pgEnum("monitor_status", ["unknown", "up", "down"]);
+export type MonitorStatus = (typeof monitorStatusEnum.enumValues)[number];
+
 export const monitors = pgTable("monitors", {
     id: serial("id").primaryKey(),
     userId: integer("user_id")
@@ -31,6 +34,9 @@ export const monitors = pgTable("monitors", {
     intervalSeconds: integer("interval_seconds").default(60).notNull(),
     timeoutMs: integer("timeout_ms").default(5000).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    failureThreshold: integer("failure_threshold").default(1).notNull(),
+    status: monitorStatusEnum("status").default("unknown").notNull(),
+    consecutiveFailures: integer("consecutive_failures").default(0).notNull(),
     createdAt: timestamptz("created_at").defaultNow().notNull()
 });
 
