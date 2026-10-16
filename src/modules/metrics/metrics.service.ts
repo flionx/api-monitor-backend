@@ -14,7 +14,7 @@ function toPercent(part: number, total: number) {
 
 export class MerticsService {
     static async getStats(userId: number, monitorId: number, range: MetricsRange) {
-        await MonitorsService.getOwned(userId, monitorId);
+        const monitor = await MonitorsService.getOwned(userId, monitorId);
 
         const [aggRows, lastRows] = await Promise.all([
             db
@@ -38,7 +38,7 @@ export class MerticsService {
                 .where(and(eq(checks.monitorId, monitorId), withinLast(RANGE_SECONDS[range]))),
 
             db
-                .select({ isUp: checks.isUp, checkedAt: checks.checkedAt })
+                .select({ checkedAt: checks.checkedAt })
                 .from(checks)
                 .where(eq(checks.monitorId, monitorId))
                 .orderBy(desc(checks.checkedAt))
@@ -54,7 +54,7 @@ export class MerticsService {
 
         return {
             range,
-            currentStatus: last ? (last.isUp ? "up" : "down") : "unknown",
+            currentStatus: monitor.status,
             lastCheckedAt: last ? last.checkedAt : null,
             uptimePercent: toPercent(agg.successfull, agg.total),
             totalChecks: agg.total,
