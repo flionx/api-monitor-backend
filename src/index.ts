@@ -1,4 +1,5 @@
 import express, { type Response } from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import { env } from "./shared/config/env.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
@@ -7,6 +8,7 @@ import { notificationRoutes } from "./modules/notifications/notifications.routes
 import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { WorkerService } from "./worker/worker.service.js";
 import { pool } from "./db/index.js";
+import { requireTrustedOrigin } from "./shared/middleware/requireTrustedOrigin.js";
 
 const PORT = env.PORT;
 
@@ -16,6 +18,8 @@ if (env.NODE_ENV === "production") {
     app.set("trust proxy", 1);
 }
 
+app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
+app.use(requireTrustedOrigin);
 app.use(express.json());
 app.use(cookieParser());
 

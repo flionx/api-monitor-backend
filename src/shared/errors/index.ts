@@ -25,6 +25,13 @@ export class UnauthorizedError extends AppError {
     }
 }
 
+/** 403 Forbidden */
+export class ForbiddenError extends AppError {
+    constructor(message: string) {
+        super(message, 403);
+    }
+}
+
 /** 404 Not found */
 export class NotFoundError extends AppError {
     constructor(message: string) {
@@ -36,6 +43,12 @@ export class NotFoundError extends AppError {
 export class ConflictError extends AppError {
     constructor(message: string) {
         super(message, 409);
+    }
+}
+/** 429 Too Many Requests */
+export class TooManyRequestsError extends AppError {
+    constructor(message: string) {
+        super(message, 429);
     }
 }
 
