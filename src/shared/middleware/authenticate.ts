@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { UnauthorizedError } from "../errors/index.js";
+import { AUTH_COOKIE_NAME } from "../lib/auth-cookie.js";
 
 const JWT_SECRET = env.JWT_SECRET;
 
@@ -19,14 +20,11 @@ const isMyJwtPayload = (obj: unknown): obj is MyJwtPayload =>
     typeof obj.email === "string";
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
-    const match = authHeader?.match(/^Bearer (.+)$/);
+    const token: unknown = req.cookies?.[AUTH_COOKIE_NAME];
 
-    if (!match) {
+    if (typeof token !== "string" || token === "") {
         return next(new UnauthorizedError("Authentication token is required"));
     }
-
-    const token = match[1]!;
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);

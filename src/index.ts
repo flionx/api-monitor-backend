@@ -1,4 +1,5 @@
 import express, { type Response } from "express";
+import cookieParser from "cookie-parser";
 import { env } from "./shared/config/env.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { monitorRoutes } from "./modules/monitors/monitors.routes.js";
@@ -10,7 +11,13 @@ import { pool } from "./db/index.js";
 const PORT = env.PORT;
 
 const app = express();
+
+if (env.NODE_ENV === "production") {
+    app.set("trust proxy", 1);
+}
+
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/health", (_, res: Response) => {
     res.status(200).json({

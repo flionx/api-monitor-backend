@@ -5,6 +5,7 @@ import { db } from "@/db/index.js";
 import { users } from "@/db/schema.js";
 import { AppError, ConflictError, UnauthorizedError } from "@/shared/errors/index.js";
 import { env } from "@/shared/config/env.js";
+import { SESSION_TTL_SECONDS } from "@/shared/lib/auth-cookie.js";
 
 const JWT_SECRET = env.JWT_SECRET;
 
@@ -57,7 +58,7 @@ export class AuthService {
     }
 
     private static generateToken(userId: number, email: string) {
-        return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: "24h" });
+        return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: SESSION_TTL_SECONDS });
     }
 
     private static buildAuthResponse(user: { id: number; email: string; createdAt: Date }) {
