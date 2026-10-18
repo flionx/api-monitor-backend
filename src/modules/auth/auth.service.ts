@@ -57,6 +57,23 @@ export class AuthService {
         return this.buildAuthResponse(user);
     }
 
+    static async getById(userId: number) {
+        const [user] = await db
+            .select({
+                id: users.id,
+                email: users.email,
+                createdAt: users.createdAt
+            })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+
+        if (!user) {
+            throw new UnauthorizedError("User no longer exists");
+        }
+        return user;
+    }
+
     private static generateToken(userId: number) {
         return jwt.sign({ userId }, JWT_SECRET, { expiresIn: SESSION_TTL_SECONDS });
     }
