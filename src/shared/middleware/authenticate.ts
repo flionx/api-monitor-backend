@@ -8,16 +8,10 @@ const JWT_SECRET = env.JWT_SECRET;
 
 interface MyJwtPayload extends JwtPayload {
     userId: number;
-    email: string;
 }
 
 const isMyJwtPayload = (obj: unknown): obj is MyJwtPayload =>
-    obj !== null &&
-    typeof obj === "object" &&
-    "userId" in obj &&
-    "email" in obj &&
-    typeof obj.userId === "number" &&
-    typeof obj.email === "string";
+    obj !== null && typeof obj === "object" && "userId" in obj && typeof obj.userId === "number";
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
     const token: unknown = req.cookies?.[AUTH_COOKIE_NAME];
@@ -33,8 +27,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
         }
 
         req.user = {
-            userId: decoded.userId,
-            email: decoded.email
+            userId: decoded.userId
         };
         next();
     } catch {

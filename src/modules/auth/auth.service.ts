@@ -57,12 +57,12 @@ export class AuthService {
         return this.buildAuthResponse(user);
     }
 
-    private static generateToken(userId: number, email: string) {
-        return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: SESSION_TTL_SECONDS });
+    private static generateToken(userId: number) {
+        return jwt.sign({ userId }, JWT_SECRET, { expiresIn: SESSION_TTL_SECONDS });
     }
 
     private static buildAuthResponse(user: { id: number; email: string; createdAt: Date }) {
-        const token = this.generateToken(user.id, user.email);
+        const token = this.generateToken(user.id);
         return {
             token,
             user: {
