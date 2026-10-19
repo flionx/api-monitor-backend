@@ -2,7 +2,7 @@ import { db } from "@/db/index.js";
 import { notificationChannels, type ChannelConfig } from "@/db/schema.js";
 import { and, count, desc, eq } from "drizzle-orm";
 import { toPublicChannel } from "./notifications.mapper.js";
-import { AppError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
+import { AppError, ConflictError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
 import {
     channelConfigSchemas,
     type CreateChannelDto,
@@ -10,6 +10,8 @@ import {
 } from "./notifications.schema.js";
 import { formatZodIssues } from "@/shared/lib/format-zod-issues.js";
 import { buildPage, type PaginationQuery } from "@/shared/lib/pagination.js";
+
+const MAX_CHANNELS_PER_USER = 20;
 
 export class NotificationsService {
     static async getAllByUserId(userId: number, pagination: PaginationQuery) {
@@ -49,6 +51,15 @@ export class NotificationsService {
     }
 
     static async create(userId: number, data: CreateChannelDto) {
+        const [totalRow] = await db
+            .select({ total: count() })
+            .from(notificationChannels)
+            .where(eq(notificationChannels.userId, userId));
+
+        if ((totalRow?.total ?? 0) >= MAX_CHANNELS_PER_USER) {
+            throw new ConflictError(`Channel limit reached (${MAX_CHANNELS_PER_USER})`);
+        }
+
         const [newChannel] = await db
             .insert(notificationChannels)
             .values({ ...data, userId })
