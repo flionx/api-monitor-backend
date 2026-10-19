@@ -33,9 +33,14 @@ export const createChannelSchema = z.discriminatedUnion("type", [
     })
 ]);
 
-export const updateChannelSchema = z.object({
-    config: z.record(z.string(), z.unknown())
-});
+export const updateChannelSchema = z
+    .object({
+        name: channelNameSchema.optional(),
+        config: z.record(z.string(), z.unknown()).optional()
+    })
+    .refine((data) => data.name !== undefined || data.config !== undefined, {
+        error: "At least one of name or config must be provided"
+    });
 
 export const channelIdParamSchema = z.object({
     id: z.coerce.number().int().positive()

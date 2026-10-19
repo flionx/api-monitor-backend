@@ -1,5 +1,5 @@
 import { db } from "@/db/index.js";
-import { notificationChannels } from "@/db/schema.js";
+import { notificationChannels, type ChannelConfig } from "@/db/schema.js";
 import { and, desc, eq } from "drizzle-orm";
 import { toPublicChannel } from "./notifications.mapper.js";
 import { AppError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
@@ -51,14 +51,25 @@ export class NotificationsService {
     static async update(userId: number, channelId: number, data: UpdateChannelDto) {
         const channel = await this.getOwned(userId, channelId);
 
-        const parsed = channelConfigSchemas[channel.type].safeParse(data.config);
-        if (!parsed.success) {
-            throw new ValidationError("Invalid channel config", formatZodIssues(parsed.error));
+        const changes: { name?: string; config?: ChannelConfig } = {};
+
+        if (data.name !== undefined) {
+            changes.name = data.name;
+        }
+        if (data.config !== undefined) {
+            const parsed = channelConfigSchemas[channel.type].safeParse({
+                ...channel.config,
+                ...data.config
+            });
+            if (!parsed.success) {
+                throw new ValidationError("Invalid channel config", formatZodIssues(parsed.error));
+            }
+            changes.config = parsed.data;
         }
 
         const [updated] = await db
             .update(notificationChannels)
-            .set({ config: parsed.data })
+            .set(changes)
             .where(
                 and(eq(notificationChannels.userId, userId), eq(notificationChannels.id, channelId))
             )
