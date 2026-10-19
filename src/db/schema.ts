@@ -57,6 +57,7 @@ export const notificationChannels = pgTable("notification_channels", {
     userId: integer("user_id")
         .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
     type: channelTypeEnum("type").notNull(),
     config: jsonb("config").$type<ChannelConfig>().notNull(),
     createdAt: timestamptz("created_at").defaultNow().notNull()

@@ -18,9 +18,19 @@ export const channelConfigSchemas = {
     discord: discordConfigSchema
 } satisfies Record<ChannelType, z.ZodType<ChannelConfig>>;
 
+const channelNameSchema = z.string().trim().min(1, "Name is required").max(100);
+
 export const createChannelSchema = z.discriminatedUnion("type", [
-    z.object({ type: z.literal("telegram"), config: telegramConfigSchema }),
-    z.object({ type: z.literal("discord"), config: discordConfigSchema })
+    z.object({
+        name: channelNameSchema,
+        type: z.literal("telegram"),
+        config: telegramConfigSchema
+    }),
+    z.object({
+        name: channelNameSchema,
+        type: z.literal("discord"),
+        config: discordConfigSchema
+    })
 ]);
 
 export const updateChannelSchema = z.object({

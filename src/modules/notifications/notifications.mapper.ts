@@ -56,6 +56,7 @@ function maskConfig(channel: NotificationChannel) {
 export function toPublicChannel(channel: NotificationChannel) {
     return {
         id: channel.id,
+        name: channel.name,
         type: channel.type,
         config: maskConfig(channel),
         createdAt: channel.createdAt

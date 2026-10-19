@@ -40,6 +40,9 @@ export class NotifyService {
     }
 
     static async sendTest(channel: NotificationChannel) {
-        await sendViaChannel(channel, "Test notification from API Monitor");
+        await sendViaChannel(
+            channel,
+            `Test notification from API Monitor\nChannel: ${channel.name} - ${channel.type}`
+        );
     }
 }
