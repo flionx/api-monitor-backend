@@ -1,14 +1,16 @@
-import { getAuthenticatedUser } from "@/shared/lib/get-authenticated-user.js";
 import type { Request, Response } from "express";
 import { NotificationsService } from "./notifications.service.js";
-import type { CreateChannelDto } from "./notifications.schema.js";
 import { NotifyService } from "./notify.service.js";
+import { getAuthenticatedUser } from "@/shared/lib/get-authenticated-user.js";
+import type { CreateChannelDto } from "./notifications.schema.js";
+import type { PaginationQuery } from "@/shared/lib/pagination.js";
 
 export class NotificationsController {
     static async getAll(req: Request, res: Response) {
         const { userId } = getAuthenticatedUser(req);
-        const list = await NotificationsService.getAllByUserId(userId);
-        res.status(200).json(list);
+        const pagination = res.locals.query as PaginationQuery;
+        const page = await NotificationsService.getAllByUserId(userId, pagination);
+        res.status(200).json(page);
     }
 
     static async create(req: Request, res: Response) {

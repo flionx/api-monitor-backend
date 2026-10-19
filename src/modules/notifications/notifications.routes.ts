@@ -8,12 +8,14 @@ import {
     updateChannelSchema
 } from "./notifications.schema.js";
 import { validateParams } from "@/shared/middleware/validateParams.js";
+import { validateQuery } from "@/shared/middleware/validateQuery.js";
+import { paginationQuerySchema } from "@/shared/lib/pagination.js";
 
 const router = Router();
 
 router.use(authenticate);
 
-router.get("/", NotificationsController.getAll);
+router.get("/", validateQuery(paginationQuerySchema), NotificationsController.getAll);
 router.post("/", validate(createChannelSchema), NotificationsController.create);
 router.patch(
     "/:id",

@@ -1,6 +1,6 @@
 import { db } from "@/db/index.js";
 import { notificationChannels, type ChannelConfig } from "@/db/schema.js";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { toPublicChannel } from "./notifications.mapper.js";
 import { AppError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
 import {
@@ -9,16 +9,28 @@ import {
     type UpdateChannelDto
 } from "./notifications.schema.js";
 import { formatZodIssues } from "@/shared/lib/format-zod-issues.js";
+import { buildPage, type PaginationQuery } from "@/shared/lib/pagination.js";
 
 export class NotificationsService {
-    static async getAllByUserId(userId: number) {
-        const list = await db
-            .select()
-            .from(notificationChannels)
-            .where(eq(notificationChannels.userId, userId))
-            .orderBy(desc(notificationChannels.createdAt));
+    static async getAllByUserId(userId: number, pagination: PaginationQuery) {
+        const where = eq(notificationChannels.userId, userId);
 
-        return list.map(toPublicChannel);
+        const [rows, [totalRow]] = await Promise.all([
+            db
+                .select()
+                .from(notificationChannels)
+                .where(where)
+                .orderBy(desc(notificationChannels.createdAt), desc(notificationChannels.id))
+                .limit(pagination.limit)
+                .offset(pagination.offset),
+            db.select({ total: count() }).from(notificationChannels).where(where)
+        ]);
+
+        return buildPage(
+            rows.map((row) => toPublicChannel(row)),
+            totalRow?.total ?? 0,
+            pagination
+        );
     }
 
     /** Returns the raw row(with secrets). For internal use only or with toPublicChannel */
