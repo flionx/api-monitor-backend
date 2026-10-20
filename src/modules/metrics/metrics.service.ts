@@ -12,103 +12,17 @@ function toPercent(part: number, total: number) {
     return total === 0 ? null : Math.round((part / total) * 10000) / 100;
 }
 
+type Monitor = typeof monitors.$inferSelect;
+
 export class MerticsService {
     static async getStats(userId: number, monitorId: number, range: MetricsRange) {
         const monitor = await MonitorsService.getOwned(userId, monitorId);
-
-        const [aggRows, lastRows] = await Promise.all([
-            db
-                .select({
-                    total: sql<number>`count(*)::int`,
-                    successfull: sql<number>`(count(*) FILTER (WHERE ${checks.isUp}))::int`,
-                    avgMs: sql<
-                        number | null
-                    >`round(avg(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
-                    minMs: sql<
-                        number | null
-                    >`(min(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
-                    maxMs: sql<
-                        number | null
-                    >`(max(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
-                    p95Ms: sql<
-                        number | null
-                    >`round(percentile_cont(0.95) WITHIN GROUP (ORDER BY ${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`
-                })
-                .from(checks)
-                .where(and(eq(checks.monitorId, monitorId), withinLast(RANGE_SECONDS[range]))),
-
-            db
-                .select({ checkedAt: checks.checkedAt })
-                .from(checks)
-                .where(eq(checks.monitorId, monitorId))
-                .orderBy(desc(checks.checkedAt))
-                .limit(1)
-        ]);
-
-        const agg = aggRows[0];
-        if (!agg) {
-            throw new AppError("Failed to compute stats", 500);
-        }
-
-        const last = lastRows[0];
-
-        return {
-            range,
-            currentStatus: monitor.status,
-            lastCheckedAt: last ? last.checkedAt : null,
-            uptimePercent: toPercent(agg.successfull, agg.total),
-            totalChecks: agg.total,
-            failedChecks: agg.total - agg.successfull,
-            responseTime: {
-                avgMs: agg.avgMs,
-                minMs: agg.minMs,
-                maxMs: agg.maxMs,
-                p95ms: agg.p95Ms
-            }
-        };
+        return this.computeStats(monitor, range);
     }
 
     static async getChart(userId: number, monitorId: number, range: MetricsRange, points: number) {
-        await MonitorsService.getOwned(userId, monitorId);
-
-        const rangeSeconds = RANGE_SECONDS[range];
-        const bucketSeconds = Math.ceil(rangeSeconds / points);
-
-        const bucket = sql`date_bin(
-            ${bucketSeconds}::int * INTERVAL '1 second',
-            ${checks.checkedAt},
-            TIMESTAMPTZ '2000-01-01 00:00:00+00'
-        )`.mapWith(checks.checkedAt);
-
-        const rows = await db
-            .select({
-                timestamp: bucket,
-                totalChecks: sql<number>`count(*)::int`,
-                failedChecks: sql<number>`(count(*) FILTER (WHERE NOT ${checks.isUp}))::int`,
-                avgResponseTimeMs: sql<
-                    number | null
-                >`round(avg(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
-                maxResponseTimeMs: sql<
-                    number | null
-                >`(max(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`
-            })
-            .from(checks)
-            .where(and(eq(checks.monitorId, monitorId), withinLast(rangeSeconds)))
-            .groupBy(sql`1`)
-            .orderBy(sql`1`);
-
-        return {
-            range,
-            bucketSeconds,
-            points: rows.map((row) => ({
-                timestamp: row.timestamp,
-                totalChecks: row.totalChecks,
-                failedChecks: row.failedChecks,
-                avgResponseTimeMs: row.avgResponseTimeMs,
-                maxResponseTimeMs: row.maxResponseTimeMs,
-                uptimePercent: toPercent(row.totalChecks - row.failedChecks, row.totalChecks)
-            }))
-        };
+        const monitor = await MonitorsService.getOwned(userId, monitorId);
+        return this.computeChart(monitor, range, points);
     }
 
     static async getSummary(userId: number) {
@@ -169,6 +83,88 @@ export class MerticsService {
                 failedChecks: uptime.total - uptime.successfull
             },
             downMonitors
+        };
+    }
+
+    private static async computeStats(monitor: Monitor, range: MetricsRange) {
+        const [agg] = await db
+            .select({
+                total: sql<number>`count(*)::int`,
+                successfull: sql<number>`(count(*) FILTER (WHERE ${checks.isUp}))::int`,
+                avgMs: sql<
+                    number | null
+                >`round(avg(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
+                minMs: sql<
+                    number | null
+                >`(min(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
+                maxMs: sql<
+                    number | null
+                >`(max(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
+                p95Ms: sql<
+                    number | null
+                >`round(percentile_cont(0.95) WITHIN GROUP (ORDER BY ${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`
+            })
+            .from(checks)
+            .where(and(eq(checks.monitorId, monitor.id), withinLast(RANGE_SECONDS[range])));
+
+        if (!agg) {
+            throw new AppError("Failed to compute stats", 500);
+        }
+
+        return {
+            range,
+            currentStatus: monitor.status,
+            lastCheckedAt: monitor.lastCheckedAt,
+            uptimePercent: toPercent(agg.successfull, agg.total),
+            totalChecks: agg.total,
+            failedChecks: agg.total - agg.successfull,
+            responseTime: {
+                avgMs: agg.avgMs,
+                minMs: agg.minMs,
+                maxMs: agg.maxMs,
+                p95ms: agg.p95Ms
+            }
+        };
+    }
+
+    private static async computeChart(monitor: Monitor, range: MetricsRange, points: number) {
+        const rangeSeconds = RANGE_SECONDS[range];
+        const bucketSeconds = Math.ceil(rangeSeconds / points);
+
+        const bucket = sql`date_bin(
+            ${bucketSeconds}::int * INTERVAL '1 second',
+            ${checks.checkedAt},
+            TIMESTAMPTZ '2000-01-01 00:00:00+00'
+        )`.mapWith(checks.checkedAt);
+
+        const rows = await db
+            .select({
+                timestamp: bucket,
+                totalChecks: sql<number>`count(*)::int`,
+                failedChecks: sql<number>`(count(*) FILTER (WHERE NOT ${checks.isUp}))::int`,
+                avgResponseTimeMs: sql<
+                    number | null
+                >`round(avg(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`,
+                maxResponseTimeMs: sql<
+                    number | null
+                >`(max(${checks.responseTimeMs}) FILTER (WHERE ${checks.isUp}))::int`
+            })
+            .from(checks)
+            .where(and(eq(checks.monitorId, monitor.id), withinLast(rangeSeconds)))
+            .groupBy(sql`1`)
+            .orderBy(sql`1`);
+
+        return {
+            range,
+            bucketSeconds,
+            points: rows.map((row) => ({
+                timestamp: row.timestamp,
+                totalChecks: row.totalChecks,
+                failedChecks: row.failedChecks,
+                avgResponseTimeMs: row.avgResponseTimeMs,
+                maxResponseTimeMs: row.maxResponseTimeMs,
+                uptimePercent: toPercent(row.totalChecks - row.failedChecks, row.totalChecks)
+            }))
         };
     }
 }
