@@ -16,6 +16,8 @@ import { MonitorChannelsController } from "./monitor-channels.controller.js";
 import { validateQuery } from "@/shared/middleware/validateQuery.js";
 import { chartQuerySchema, statsQuerySchema } from "../metrics/metrics.schema.js";
 import { MetricsController } from "../metrics/metrics.controller.js";
+import { checksQuerySchema } from "../checks/checks.schema.js";
+import { ChecksController } from "../checks/checks.controller.js";
 
 const router = Router();
 
@@ -71,6 +73,14 @@ router.get(
     validateParams(monitorIdParamSchema),
     validateQuery(chartQuerySchema),
     MetricsController.getOverview
+);
+
+// checks
+router.get(
+    "/:id/checks",
+    validateParams(monitorIdParamSchema),
+    validateQuery(checksQuerySchema),
+    ChecksController.getHistory
 );
 
 export { router as monitorRoutes };
