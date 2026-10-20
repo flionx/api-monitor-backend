@@ -5,10 +5,11 @@ import { env } from "./shared/config/env.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { monitorRoutes } from "./modules/monitors/monitors.routes.js";
 import { notificationRoutes } from "./modules/notifications/notifications.routes.js";
+import { requireTrustedOrigin } from "./shared/middleware/requireTrustedOrigin.js";
+import { notFound } from "./shared/middleware/notFound.js";
 import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { WorkerService } from "./worker/worker.service.js";
 import { pool } from "./db/index.js";
-import { requireTrustedOrigin } from "./shared/middleware/requireTrustedOrigin.js";
 
 const PORT = env.PORT;
 
@@ -35,6 +36,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/monitors", monitorRoutes);
 app.use("/api/notification-channels", notificationRoutes);
 
+app.use(notFound);
 app.use(errorHandler);
 
 if (env.WORKER_ENABLED) {
