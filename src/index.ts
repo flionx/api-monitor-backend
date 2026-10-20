@@ -10,6 +10,7 @@ import { notFound } from "./shared/middleware/notFound.js";
 import { errorHandler } from "./shared/middleware/errorHandler.js";
 import { WorkerService } from "./worker/worker.service.js";
 import { pool } from "./db/index.js";
+import helmet from "helmet";
 
 const PORT = env.PORT;
 
@@ -19,6 +20,7 @@ if (env.NODE_ENV === "production") {
     app.set("trust proxy", 1);
 }
 
+app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
 app.use(requireTrustedOrigin);
 app.use(express.json());
