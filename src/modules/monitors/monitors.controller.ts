@@ -1,14 +1,13 @@
 import { type Request, type Response } from "express";
 import { MonitorsService } from "./monitors.service.js";
-import type { CreateMonitorDto, UpdateMonitorDto } from "./monitors.schema.js";
+import type { CreateMonitorDto, ListMonitorsQuery, UpdateMonitorDto } from "./monitors.schema.js";
 import { getAuthenticatedUser } from "@/shared/lib/get-authenticated-user.js";
-import type { PaginationQuery } from "@/shared/lib/pagination.js";
 
 export class MonitorsController {
     static async getAll(req: Request, res: Response) {
         const { userId } = getAuthenticatedUser(req);
-        const pagination = res.locals.query as PaginationQuery;
-        const page = await MonitorsService.getAllByUserId(userId, pagination);
+        const query = res.locals.query as ListMonitorsQuery;
+        const page = await MonitorsService.getAllByUserId(userId, query);
         res.status(200).json(page);
     }
 

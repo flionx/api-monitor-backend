@@ -23,6 +23,7 @@ export const users = pgTable("users", {
 
 export const monitorStatusEnum = pgEnum("monitor_status", ["unknown", "up", "down"]);
 export type MonitorStatus = (typeof monitorStatusEnum.enumValues)[number];
+export const MONITOR_STATUSES = monitorStatusEnum.enumValues;
 
 export const monitors = pgTable("monitors", {
     id: serial("id").primaryKey(),

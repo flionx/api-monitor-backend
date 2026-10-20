@@ -1,13 +1,29 @@
 import { db } from "@/db/index.js";
 import { monitors } from "@/db/schema.js";
-import { and, count, desc, eq } from "drizzle-orm";
-import type { CreateMonitorDto, UpdateMonitorDto } from "./monitors.schema.js";
+import { and, count, desc, eq, ilike, or, SQL } from "drizzle-orm";
+import type { CreateMonitorDto, ListMonitorsQuery, UpdateMonitorDto } from "./monitors.schema.js";
 import { AppError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
 import { buildPage, type PaginationQuery } from "@/shared/lib/pagination.js";
+import { escapeLike } from "@/shared/lib/escape-like.js";
 
 export class MonitorsService {
-    static async getAllByUserId(userId: number, pagination: PaginationQuery) {
-        const where = eq(monitors.userId, userId);
+    static async getAllByUserId(userId: number, query: ListMonitorsQuery) {
+        const conditions: SQL[] = [eq(monitors.userId, userId)];
+
+        if (query.q) {
+            const pattern = `%${escapeLike(query.q)}%`;
+            const search = or(ilike(monitors.name, pattern), ilike(monitors.url, pattern));
+            if (search) conditions.push(search);
+        }
+
+        if (query.isActive !== undefined) {
+            conditions.push(eq(monitors.isActive, query.isActive));
+        }
+        if (query.status) {
+            conditions.push(eq(monitors.status, query.status));
+        }
+
+        const where = and(...conditions);
 
         const [rows, [totalRow]] = await Promise.all([
             db
@@ -15,12 +31,12 @@ export class MonitorsService {
                 .from(monitors)
                 .where(where)
                 .orderBy(desc(monitors.createdAt), desc(monitors.id))
-                .limit(pagination.limit)
-                .offset(pagination.offset),
+                .limit(query.limit)
+                .offset(query.offset),
             db.select({ total: count() }).from(monitors).where(where)
         ]);
 
-        return buildPage(rows, totalRow?.total ?? 0, pagination);
+        return buildPage(rows, totalRow?.total ?? 0, query);
     }
 
     static async getOwned(userId: number, monitorId: number) {

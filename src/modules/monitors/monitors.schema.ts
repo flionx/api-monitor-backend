@@ -1,3 +1,5 @@
+import { MONITOR_STATUSES } from "@/db/schema.js";
+import { paginationQuerySchema } from "@/shared/lib/pagination.js";
 import z from "zod";
 
 export const createMonitorSchema = z.object({
@@ -42,3 +44,19 @@ export const updateMonitorChannelSchema = z.object({
 
 export type AttachChannelDto = z.infer<typeof attachChannelSchema>;
 export type UpdateMonitorChannelDto = z.infer<typeof updateMonitorChannelSchema>;
+
+export const listMonitorsQuerySchema = paginationQuerySchema.extend({
+    q: z
+        .string()
+        .trim()
+        .max(100)
+        .optional()
+        .transform((value) => value || undefined),
+    status: z.enum(MONITOR_STATUSES).optional(),
+    isActive: z
+        .enum(["true", "false"])
+        .transform((value) => value === "true")
+        .optional()
+});
+
+export type ListMonitorsQuery = z.infer<typeof listMonitorsQuerySchema>;
