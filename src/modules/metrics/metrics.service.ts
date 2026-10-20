@@ -86,6 +86,20 @@ export class MerticsService {
         };
     }
 
+    static async getOverview(
+        userId: number,
+        monitorId: number,
+        range: MetricsRange,
+        points: number
+    ) {
+        const monitor = await MonitorsService.getOwned(userId, monitorId);
+        const [stats, chart] = await Promise.all([
+            this.computeStats(monitor, range),
+            this.computeChart(monitor, range, points)
+        ]);
+        return { monitor, stats, chart };
+    }
+
     private static async computeStats(monitor: Monitor, range: MetricsRange) {
         const [agg] = await db
             .select({

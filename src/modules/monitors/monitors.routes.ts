@@ -66,5 +66,11 @@ router.get(
     validateQuery(chartQuerySchema),
     MetricsController.getChart
 );
+router.get(
+    "/:id/overview",
+    validateParams(monitorIdParamSchema),
+    validateQuery(chartQuerySchema),
+    MetricsController.getOverview
+);
 
 export { router as monitorRoutes };
