@@ -1,4 +1,4 @@
-import { checks } from "@/db/schema.js";
+import { checks, monitors } from "@/db/schema.js";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { RANGE_SECONDS, type MetricsRange } from "./metrics.schema.js";
 import { MonitorsService } from "../monitors/monitors.service.js";
@@ -108,6 +108,67 @@ export class MerticsService {
                 maxResponseTimeMs: row.maxResponseTimeMs,
                 uptimePercent: toPercent(row.totalChecks - row.failedChecks, row.totalChecks)
             }))
+        };
+    }
+
+    static async getSummary(userId: number) {
+        const [[counts], [uptime], downMonitors] = await Promise.all([
+            db
+                .select({
+                    total: sql<number>`count(*)::int`,
+                    up: sql<number>`(count(*) FILTER (WHERE ${monitors.isActive} AND ${monitors.status} = 'up'))::int`,
+                    down: sql<number>`(count(*) FILTER (WHERE ${monitors.isActive} AND ${monitors.status} = 'down'))::int`,
+                    pending: sql<number>`(count(*) FILTER (WHERE ${monitors.isActive} AND ${monitors.status} = 'unknown'))::int`,
+                    paused: sql<number>`(count(*) FILTER (WHERE NOT ${monitors.isActive}))::int`
+                })
+                .from(monitors)
+                .where(eq(monitors.userId, userId)),
+            db
+                .select({
+                    total: sql<number>`count(*)::int`,
+                    successfull: sql<number>`(count(*) FILTER (WHERE ${checks.isUp}))::int`
+                })
+                .from(checks)
+                .innerJoin(monitors, eq(checks.monitorId, monitors.id))
+                .where(
+                    and(
+                        eq(monitors.userId, userId),
+                        eq(monitors.isActive, true),
+                        withinLast(RANGE_SECONDS["24h"])
+                    )
+                ),
+            db
+                .select({
+                    id: monitors.id,
+                    name: monitors.name,
+                    url: monitors.url,
+                    lastCheckedAt: monitors.lastCheckedAt,
+                    lastErrorMessage: monitors.lastErrorMessage
+                })
+                .from(monitors)
+                .where(
+                    and(
+                        eq(monitors.userId, userId),
+                        eq(monitors.isActive, true),
+                        eq(monitors.status, "down")
+                    )
+                )
+                .orderBy(desc(monitors.lastCheckedAt))
+                .limit(10)
+        ]);
+
+        if (!counts || !uptime) {
+            throw new AppError("Failed to compute summary", 500);
+        }
+
+        return {
+            counts,
+            uptime24h: {
+                percent: toPercent(uptime.successfull, uptime.total),
+                totalChecks: uptime.total,
+                failedChecks: uptime.total - uptime.successfull
+            },
+            downMonitors
         };
     }
 }

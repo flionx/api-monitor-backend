@@ -22,6 +22,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/", validateQuery(listMonitorsQuerySchema), MonitorsController.getAll);
+router.get("/summary", MetricsController.getSummary);
 router.get("/:id", validateParams(monitorIdParamSchema), MonitorsController.getById);
 router.post("/", validate(createMonitorSchema), MonitorsController.create);
 router.patch(

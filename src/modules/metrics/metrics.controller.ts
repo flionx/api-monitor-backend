@@ -21,4 +21,10 @@ export class MetricsController {
         const chart = await MerticsService.getChart(userId, monitorId, range, points);
         res.status(200).json(chart);
     }
+
+    static async getSummary(req: Request, res: Response) {
+        const { userId } = getAuthenticatedUser(req);
+        const summary = await MerticsService.getSummary(userId);
+        res.status(200).json(summary);
+    }
 }

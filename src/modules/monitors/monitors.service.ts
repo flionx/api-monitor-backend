@@ -3,7 +3,7 @@ import { monitors } from "@/db/schema.js";
 import { and, count, desc, eq, ilike, or, SQL } from "drizzle-orm";
 import type { CreateMonitorDto, ListMonitorsQuery, UpdateMonitorDto } from "./monitors.schema.js";
 import { AppError, NotFoundError, ValidationError } from "@/shared/errors/index.js";
-import { buildPage, type PaginationQuery } from "@/shared/lib/pagination.js";
+import { buildPage } from "@/shared/lib/pagination.js";
 import { escapeLike } from "@/shared/lib/escape-like.js";
 
 export class MonitorsService {
