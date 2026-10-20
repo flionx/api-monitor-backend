@@ -5,6 +5,16 @@ import { NotifyService } from "@/modules/notifications/notify.service.js";
 import { eq } from "drizzle-orm";
 import { evaluateCheck } from "./evaluate-check.js";
 
+const CONNECTION_ERROR_CODES = new Set([
+    "ENOTFOUND",
+    "ECONNREFUSED",
+    "ECONNRESET",
+    "ETIMEDOUT",
+    "EHOSTUNREACH",
+    "ENETUNREACH",
+    "EAI_AGAIN"
+]);
+
 interface MonitorToCheck {
     id: number;
     name: string;
@@ -46,14 +56,18 @@ export class CheckerService {
             }
         } catch (err: any) {
             isUp = false;
-            if (err.name === "AbortError") {
+
+            const cause = err?.cause ?? err;
+            const code: string | undefined = cause?.code ?? err?.code;
+
+            if (err?.name === "AbortError") {
                 errorMessage = `Request timed out after ${monitor.timeoutMs}ms`;
                 errorType = "timeout";
-            } else if (err.code === "ENOTFOUND" || err.code === "ECONNREFUSED") {
-                errorMessage = `Network error: ${err.message}`;
+            } else if (code && CONNECTION_ERROR_CODES.has(code)) {
+                errorMessage = `Network error: ${code}`;
                 errorType = "connection";
             } else {
-                errorMessage = err.message || "Unknown network error";
+                errorMessage = cause?.message || err?.message || "Unknown network error";
                 errorType = "unknown";
             }
         } finally {
