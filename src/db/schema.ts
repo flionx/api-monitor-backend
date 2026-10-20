@@ -37,6 +37,9 @@ export const monitors = pgTable("monitors", {
     failureThreshold: integer("failure_threshold").default(1).notNull(),
     status: monitorStatusEnum("status").default("unknown").notNull(),
     consecutiveFailures: integer("consecutive_failures").default(0).notNull(),
+    lastCheckedAt: timestamptz("last_checked_at"),
+    lastResponseTimeMs: integer("last_response_time_ms"),
+    lastErrorMessage: text("last_error_message"),
     createdAt: timestamptz("created_at").defaultNow().notNull()
 });
 

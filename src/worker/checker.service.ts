@@ -2,7 +2,7 @@ import { db } from "@/db/index.js";
 import { checks, monitors, type CheckErrorType, type MonitorStatus } from "@/db/schema.js";
 import type { MonitorCheck } from "@/modules/notifications/notifications.template.js";
 import { NotifyService } from "@/modules/notifications/notify.service.js";
-import { desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { evaluateCheck } from "./evaluate-check.js";
 
 interface MonitorToCheck {
@@ -76,11 +76,16 @@ export class CheckerService {
                 })
                 .returning({ checkedAt: checks.checkedAt });
 
+            const chechedAt = saved?.checkedAt ?? new Date();
+
             await tx
                 .update(monitors)
                 .set({
                     status: next.status,
-                    consecutiveFailures: next.consecutiveFailures
+                    consecutiveFailures: next.consecutiveFailures,
+                    lastCheckedAt: chechedAt,
+                    lastResponseTimeMs: isUp ? responseTimeMs : null,
+                    lastErrorMessage: isUp ? null : errorMessage
                 })
                 .where(eq(monitors.id, monitor.id));
 
