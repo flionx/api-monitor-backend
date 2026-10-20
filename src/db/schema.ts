@@ -107,6 +107,7 @@ export const checks = pgTable(
     },
     (table) => [
         index("idx_checks_monitor_time").on(table.monitorId, table.checkedAt),
+        index("idx_checks_monitor_cursor").on(table.monitorId, table.id),
         index("idx_checks_checked_at").on(table.checkedAt)
     ]
 );
