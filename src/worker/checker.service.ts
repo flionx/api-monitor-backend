@@ -4,6 +4,7 @@ import type { MonitorCheck } from "@/modules/notifications/notifications.templat
 import { NotifyService } from "@/modules/notifications/notify.service.js";
 import { eq } from "drizzle-orm";
 import { evaluateCheck } from "./evaluate-check.js";
+import { safeFetch, SsrfError } from "@/shared/lib/safe-fetch.js";
 
 const CONNECTION_ERROR_CODES = new Set([
     "ENOTFOUND",
@@ -39,8 +40,7 @@ export class CheckerService {
         const timeoutId = setTimeout(() => controller.abort(), monitor.timeoutMs);
 
         try {
-            const response = await fetch(monitor.url, {
-                method: "GET",
+            const response = await safeFetch(monitor.url, {
                 signal: controller.signal,
                 headers: {
                     "User-Agent": "ApiMonitor/1.0 (+https://github.com/flionx/api-monitor-backend)"
@@ -63,6 +63,9 @@ export class CheckerService {
             if (err?.name === "AbortError") {
                 errorMessage = `Request timed out after ${monitor.timeoutMs}ms`;
                 errorType = "timeout";
+            } else if (err instanceof SsrfError) {
+                errorMessage = `Blocked: ${cause.message}`;
+                errorType = "connection";
             } else if (code && CONNECTION_ERROR_CODES.has(code)) {
                 errorMessage = `Network error: ${code}`;
                 errorType = "connection";

@@ -1,10 +1,23 @@
 import { MONITOR_STATUSES } from "@/db/schema.js";
 import { paginationQuerySchema } from "@/shared/lib/pagination.js";
+import { getUrlViolation } from "@/shared/lib/url-guard.js";
 import z from "zod";
+
+const monitorUrlSchema = z
+    .url("Invalid URL format")
+    .max(2048)
+    .superRefine((value, ctx) => {
+        try {
+            const violation = getUrlViolation(new URL(value));
+            if (violation) {
+                ctx.addIssue({ code: "custom", message: violation });
+            }
+        } catch {}
+    });
 
 export const createMonitorSchema = z.object({
     name: z.string().min(1, "Name is required").max(100),
-    url: z.url("Invalid URL format"),
+    url: monitorUrlSchema,
     intervalSeconds: z.number().int().min(10).max(86400).default(60), //max 24h
     timeoutMs: z.number().int().min(1000).max(30000).default(5000),
     failureThreshold: z.number().int().min(1).max(10).default(1),

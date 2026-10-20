@@ -23,6 +23,7 @@
         "jsonwebtoken": "^9.0.3",
         "p-limit": "^7.3.3",
         "pg": "^8.23.0",
+        "undici": "^8.12.3",
         "zod": "^4.6.5"
     },
     "devDependencies": {
