@@ -75,7 +75,10 @@ export class AuthService {
     }
 
     private static generateToken(userId: number) {
-        return jwt.sign({ userId }, JWT_SECRET, { expiresIn: SESSION_TTL_SECONDS });
+        return jwt.sign({ userId }, JWT_SECRET, {
+            expiresIn: SESSION_TTL_SECONDS,
+            algorithm: "HS256"
+        });
     }
 
     private static buildAuthResponse(user: { id: number; email: string; createdAt: Date }) {

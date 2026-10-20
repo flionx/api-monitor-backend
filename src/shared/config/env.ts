@@ -6,7 +6,7 @@ const envSchema = z
         NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
         PORT: z.coerce.number().int().positive().default(5000),
         DATABASE_URL: z.url(),
-        JWT_SECRET: z.string(),
+        JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
         WORKER_ENABLED: z.stringbool().default(true),
         ALLOW_PRIVATE_TARGETS: z.stringbool().default(false),
         CORS_ORIGINS: z
