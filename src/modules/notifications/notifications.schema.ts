@@ -1,0 +1,50 @@
+import type { ChannelConfig, ChannelType, DiscordConfig, TelegramConfig } from "@/db/schema.js";
+import z from "zod";
+
+const telegramConfigSchema = z.object({
+    botToken: z.string().regex(/^\d+:[\w-]{30,}$/, "Invalid Telegram bot token"),
+    chatId: z.union([z.string().trim().min(1), z.number().int()]).transform((val) => String(val))
+}) satisfies z.ZodType<TelegramConfig>;
+
+export const DISCORD_WEBHOOK_REGEX =
+    /^(https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks)\/(\d+)\/([\w-]+)$/;
+
+const discordConfigSchema = z.object({
+    webhookUrl: z.string().regex(DISCORD_WEBHOOK_REGEX, "Invalid Discord webhook URL")
+}) satisfies z.ZodType<DiscordConfig>;
+
+export const channelConfigSchemas = {
+    telegram: telegramConfigSchema,
+    discord: discordConfigSchema
+} satisfies Record<ChannelType, z.ZodType<ChannelConfig>>;
+
+const channelNameSchema = z.string().trim().min(1, "Name is required").max(100);
+
+export const createChannelSchema = z.discriminatedUnion("type", [
+    z.object({
+        name: channelNameSchema,
+        type: z.literal("telegram"),
+        config: telegramConfigSchema
+    }),
+    z.object({
+        name: channelNameSchema,
+        type: z.literal("discord"),
+        config: discordConfigSchema
+    })
+]);
+
+export const updateChannelSchema = z
+    .object({
+        name: channelNameSchema.optional(),
+        config: z.record(z.string(), z.unknown()).optional()
+    })
+    .refine((data) => data.name !== undefined || data.config !== undefined, {
+        error: "At least one of name or config must be provided"
+    });
+
+export const channelIdParamSchema = z.object({
+    id: z.coerce.number().int().positive()
+});
+
+export type CreateChannelDto = z.infer<typeof createChannelSchema>;
+export type UpdateChannelDto = z.infer<typeof updateChannelSchema>;
