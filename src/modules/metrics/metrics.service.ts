@@ -4,6 +4,7 @@ import { RANGE_SECONDS, type MetricsRange } from "./metrics.schema.js";
 import { MonitorsService } from "../monitors/monitors.service.js";
 import { db } from "@/db/index.js";
 import { AppError } from "@/shared/errors/index.js";
+import { BUCKET_ORIGIN, listBucketStarts } from "./chart-buckets.js";
 
 const withinLast = (seconds: number) =>
     sql`${checks.checkedAt} >= NOW() - ${seconds}::int * INTERVAL '1 second'`;
@@ -148,7 +149,7 @@ export class MerticsService {
         const bucket = sql`date_bin(
             ${bucketSeconds}::int * INTERVAL '1 second',
             ${checks.checkedAt},
-            TIMESTAMPTZ '2000-01-01 00:00:00+00'
+            ${BUCKET_ORIGIN.toISOString()}::timestamptz
         )`.mapWith(checks.checkedAt);
 
         const rows = await db
@@ -168,17 +169,26 @@ export class MerticsService {
             .groupBy(sql`1`)
             .orderBy(sql`1`);
 
-        return {
-            range,
-            bucketSeconds,
-            points: rows.map((row) => ({
-                timestamp: row.timestamp,
-                totalChecks: row.totalChecks,
-                failedChecks: row.failedChecks,
-                avgResponseTimeMs: row.avgResponseTimeMs,
-                maxResponseTimeMs: row.maxResponseTimeMs,
-                uptimePercent: toPercent(row.totalChecks - row.failedChecks, row.totalChecks)
-            }))
-        };
+        const rowByBucket = new Map(rows.map((row) => [row.timestamp.getTime(), row]));
+
+        const nowMs = Date.now();
+        const fromMs = Math.max(nowMs - rangeSeconds * 1000, monitor.createdAt.getTime());
+
+        const series = listBucketStarts(fromMs, nowMs, bucketSeconds * 1000).map((startMs) => {
+            const row = rowByBucket.get(startMs);
+
+            return {
+                timestamp: new Date(startMs),
+                totalChecks: row?.totalChecks ?? 0,
+                failedChecks: row?.failedChecks ?? 0,
+                avgResponseTimeMs: row?.avgResponseTimeMs ?? null,
+                maxResponseTimeMs: row?.maxResponseTimeMs ?? null,
+                uptimePercent: row
+                    ? toPercent(row.totalChecks - row.failedChecks, row.totalChecks)
+                    : null
+            };
+        });
+
+        return { range, bucketSeconds, points: series };
     }
 }
