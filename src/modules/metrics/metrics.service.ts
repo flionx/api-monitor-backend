@@ -137,7 +137,7 @@ export class MerticsService {
                 avgMs: agg.avgMs,
                 minMs: agg.minMs,
                 maxMs: agg.maxMs,
-                p95ms: agg.p95Ms
+                p95Ms: agg.p95Ms
             }
         };
     }
