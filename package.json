@@ -9,7 +9,7 @@
         "build": "tsc && tsc-alias",
         "start": "node dist/index.js",
         "db:generate": "drizzle-kit generate",
-        "db:migrate": "drizzle-kit migrate",
+        "db:migrate": "node dist/db/migrate.js",
         "format": "prettier --write \"src/**/*.ts\"",
         "format:check": "prettier --check \"src/**/*.ts\""
     },
