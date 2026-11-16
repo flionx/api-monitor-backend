@@ -79,6 +79,7 @@ How a check works:
 | `NODE_ENV`              | `development`           | `development`, `production` or `test`                                        |
 | `PORT`                  | `5000`                  | HTTP port                                                                    |
 | `DATABASE_URL`          | none                    | PostgreSQL connection string                                                 |
+| `DATABASE_CA_CERT`      | none                    | PostgreSQL SSL CA certificate in PEM format (required in production)         |
 | `JWT_SECRET`            | none                    | At least 32 characters                                                       |
 | `CORS_ORIGINS`          | `http://localhost:3000` | Comma-separated allowed frontend origins                                     |
 | `WORKER_ENABLED`        | `true`                  | Run the background worker                                                    |
@@ -151,7 +152,7 @@ Without a custom message, sensible defaults are used.
 
 ## Deployment
 
-Deployed on Render (web service) with Neon (PostgreSQL).
+Deployed on Render (web service) with Supabase (PostgreSQL).
 
 - Build command: `pnpm install --frozen-lockfile --prod=false && pnpm build`
 - Start command: `pnpm db:migrate && node dist/index.js`
