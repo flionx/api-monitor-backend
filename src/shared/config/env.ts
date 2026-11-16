@@ -6,12 +6,16 @@ const envSchema = z
         NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
         PORT: z.coerce.number().int().positive().default(5000),
         DATABASE_URL: z.url(),
+        DATABASE_CA_CERT: z
+            .string()
+            .optional()
+            .transform((val) => val?.replace(/\\n/g, "\n").trim()),
         JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
         WORKER_ENABLED: z.stringbool().default(true),
         ALLOW_PRIVATE_TARGETS: z.stringbool().default(false),
         CORS_ORIGINS: z
             .string()
-            .default("http://localhost:5173")
+            .default("http://localhost:3000")
             .transform((value) =>
                 value
                     .split(",")
@@ -21,6 +25,9 @@ const envSchema = z
     })
     .refine((e) => !(e.NODE_ENV === "production" && e.ALLOW_PRIVATE_TARGETS), {
         message: "ALLOW_PRIVATE_TARGETS must not be enabled in production"
+    })
+    .refine((e) => !(e.NODE_ENV === "production" && !e.DATABASE_CA_CERT), {
+        message: "DATABASE_CA_CERT is required in production"
     });
 
 const parsed = envSchema.safeParse(process.env);
